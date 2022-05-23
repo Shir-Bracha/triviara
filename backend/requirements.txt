@@ -1,0 +1,6 @@
+fastApi == 0.75.2
+uvicorn == 0.17.6
+jose == 1.0.0
+python-jose == 3.3.0
+pydantic == 1.9.0
+websockets == 10.3
