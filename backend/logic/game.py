@@ -118,7 +118,7 @@ def get_specific_game_current_stage_questions(game_id: str) -> Optional[Question
     if current_game is None:
         raise ValueError(f"A game with the game id: {game_id} wasn't found.")
 
-    question_index = current_game.current_stage() -1
+    question_index = current_game.current_stage - 1
 
     game_stages_amount = len(current_game.questions)
     if question_index > game_stages_amount - 1:
