@@ -11,6 +11,8 @@ from logic.interfaces import Question
 from logic.game import get_game_leaderboard_by_game_id
 from logic.game import get_specific_game_current_stage_questions
 from logic.game import promote_game_to_next_stage
+from logic.user import check_if_user_needs_to_be_promoted_stage
+from logic.user import set_all_users_need_to_be_promoted_flag
 from main import app
 
 
@@ -45,7 +47,7 @@ async def get_current_stage_questions(game_id: str) -> Question:
 
 
 @app.get("/get_questions_amount/{game_id}")
-async def get_questions_amount(game_id: str) -> Question:
+async def get_questions_amount(game_id: str) -> int:
     """
     :param game_id: the unique game identifier
     :return:
@@ -77,7 +79,17 @@ async def all_participants_answered(websocket: WebSocket, game_id: str) -> None:
     while True:
         current_game = get_game_by_id(game_id=game_id)
         did_all_participants_answered = did_participants_answered_all_questions(game=current_game)
-        await websocket.send_json(did_all_participants_answered)
+        if did_all_participants_answered:
+            promote_game_to_next_stage(game_id=game_id)
+
+            set_all_users_need_to_be_promoted_flag(
+                current_game=current_game,
+                promoted=True
+            )
+
+        user_needs_to_be_promoted_stage = check_if_user_needs_to_be_promoted_stage(current_game)
+
+        await websocket.send_json(user_needs_to_be_promoted_stage)
         await asyncio.sleep(1)
 
 

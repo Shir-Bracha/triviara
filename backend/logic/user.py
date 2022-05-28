@@ -126,6 +126,7 @@ def check_answer(game_id: str, username: str, question: str, answer: int) -> Use
 
     current_user.answered = True
 
+    # TODO: check if theres a need to update the game data itself (main dictionaries)
 
     return current_user
 
@@ -152,3 +153,22 @@ def answer_specific_question(game_id: str, username: str, question: str, answer:
         question=question,
         answer=answer,
     )
+
+
+def set_specific_user_promoted_stage_flag(current_game: KhaootGame, username: str, promoted: bool) -> None:
+    for user in current_game.participants:
+        if user.username == username:
+            user.promoted_stage = promoted
+
+
+def set_all_users_need_to_be_promoted_flag(current_game: KhaootGame, promoted: bool) -> None:
+    for participant in current_game.participants:
+        set_specific_user_promoted_stage_flag(
+            current_game=current_game,
+            username=participant.username,
+            promoted=promoted
+        )
+
+
+def check_if_user_needs_to_be_promoted_stage(game: KhaootGame) -> bool:
+    return any([user.promoted_stage for user in game.participants])

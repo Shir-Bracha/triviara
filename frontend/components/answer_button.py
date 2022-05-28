@@ -9,10 +9,10 @@ class AnswerButton(Button):
 
         self.is_it_correct_answer = is_it_correct_answer
 
-        if self.is_it_correct_answer is True:
-            self.PRESSED_BACK_COLOR = Color.GREEN
-        else:
-            self.PRESSED_BACK_COLOR = Color.RED
+        # if self.is_it_correct_answer is True:
+        #     self.PRESSED_BACK_COLOR = Color.GREEN
+        # else:
+        #     self.PRESSED_BACK_COLOR = Color.RED
 
     def checkUserAnswer(self):
         return self.is_it_correct_answer

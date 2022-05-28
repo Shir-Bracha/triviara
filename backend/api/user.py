@@ -1,9 +1,12 @@
 from logic.auth import get_data_from_jwt
 from logic.auth import update_access_token
+from logic.game import get_game_by_id
+from logic.game import get_game_user_by_username
 from logic.user import answer_specific_question
 from logic.user import create_new_admin_user_by_username
 from logic.user import create_new_user_by_username
 from logic.user import join_specific_game
+from logic.user import set_specific_user_promoted_stage_flag
 from main import app
 
 
@@ -25,6 +28,22 @@ async def create_new_user(username: str) -> str:
     """
     token = create_new_user_by_username(username=username)
     return token
+
+
+@app.post("/set_user_promoted_stage_flag")
+async def set_user_promoted_stage_flag(game_id: str, username: str, promoted: bool) -> None:
+    """
+    :param game_id:
+    :param username:
+    :param promoted:
+    :return:
+    """
+    game = get_game_by_id(game_id=game_id)
+    set_specific_user_promoted_stage_flag(
+        current_game=game,
+        username=username,
+        promoted=promoted
+    )
 
 
 @app.get("/join_game/{game_id}")
@@ -55,7 +74,7 @@ async def join_game(game_id: str, token: str) -> str:
     return updated_token
 
 
-@app.get("/answer_question/{question}/{answer}")
+@app.post("/answer_question")
 async def answer_question(question: str, answer: int, token: str) -> str:
     """
     This method receives an answer for a question and updates the participants score if the answer is correct.

@@ -16,12 +16,14 @@ class Button(TextBlock):
         self.PRESSED_BACK_COLOR = Color.BLUE
 
     def update(self):
-        if self.state == 'normal':
-            self.back_color = self.DEFAULT_BACK_COLOR
-        elif self.state == 'hover':
-            self.back_color = self.HOVERED_BACK_COLOR
-        elif self.state == 'pressed':
-            self.back_color = self.PRESSED_BACK_COLOR
+        pass
+
+        # if self.state == 'normal':
+        #     self.back_color = self.DEFAULT_BACK_COLOR
+        # elif self.state == 'hover':
+        #     self.back_color = self.HOVERED_BACK_COLOR
+        # elif self.state == 'pressed':
+        #     self.back_color = self.PRESSED_BACK_COLOR
 
     def handleMouseEvent(self, type_of_event, pos, event_button=None):
         if type_of_event == pygame.MOUSEMOTION:

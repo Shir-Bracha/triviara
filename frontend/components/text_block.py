@@ -17,15 +17,15 @@ class TextBlock(GameObject):
             self.no_fill = 0
 
         self.text = text
-        self.font = pygame.font.SysFont('David', 22)
-        self.DEFAULT_BACK_COLOR = Color.LIGHT_GRAY
+        self.font = pygame.font.SysFont('Arial', 22)
+        self.DEFAULT_BACK_COLOR = Color.WHITE
         self.back_color = self.DEFAULT_BACK_COLOR
 
     def draw(self, surface):
         surface_x = self.x
         surface_y = self.y
 
-        pygame.draw.rect(surface, self.back_color, self.bounds, self.no_fill)
+        pygame.draw.rect(surface, self.back_color, self.bounds, self.no_fill,border_radius=0)
 
         if self.image:
             surface.blit(self.image, self.image.get_rect(center=self.bounds.center))

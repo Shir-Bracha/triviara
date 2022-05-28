@@ -9,8 +9,8 @@ from api.game import api_get_questions_amount
 from api.game import websocket_all_participants_answered
 from api.game import websocket_get_game_current_stage
 from api.game import websocket_get_game_participants
-from api.game import api_move_to_next_stage
 from api.user import api_answer_question, api_join_game, api_create_new_user
+from api.user import api_set_user_promoted_stage_flag
 from api.utils import get_game_id
 from api.utils import is_current_user_admin
 from components.text_block import TextBlock
@@ -91,8 +91,8 @@ class Game:
         image = pygame.transform.scale(image, (w, h))
         self.surface.blit(image, (x, y, w, h))
 
-    def addTextInput(self, x, y, w, h, placeholder=''):
-        text_input = TextInput(x, y, w, h, placeholder=placeholder)
+    def addTextInput(self, x, y, w, h, placeholder='', length=20):
+        text_input = TextInput(x, y, w, h, placeholder=placeholder,length_restriction=length)
         self.objects.append(text_input)
         self.mouse_handlers.append(text_input.handle_mouse_down)
         self.input_handlers.append(text_input.handle_key_down_event)
@@ -147,8 +147,11 @@ class Game:
 
     def answer_question(self, question, answer):
         self.cleanScreen()
+
         api_answer_question(question, answer)
+
         game_id = get_game_id()
+
         all_participants_answered_websocket = websocket_all_participants_answered(
             game_id,
             self.check_if_all_participants_answered_and_move_to_next_question
@@ -170,15 +173,14 @@ class Game:
         del self.answer_objects[:]
         del self.mouse_handlers[:]
 
+        api_set_user_promoted_stage_flag(promoted_stage=False)
+
         questions_amount = api_get_questions_amount()
         is_admin = is_current_user_admin()
         self.current_stage += 1
 
-        if is_admin:
-            if self.current_stage == 1:
-                api_start_game()
-            else:
-                api_move_to_next_stage()
+        if is_admin and self.current_stage == 1:
+            api_start_game()
 
         if self.current_stage > questions_amount:
             game_id = get_game_id()
@@ -191,7 +193,7 @@ class Game:
             return
 
         self.current_question = api_get_current_stage_questions()
-        self.addTextBlock(50, 70, 700, self.question_height, self.current_question['question'])
+        self.addTextBlock(70, 70, 700, self.question_height, self.current_question['question'])
 
         answers = self.current_question['answers']
 
@@ -204,12 +206,12 @@ class Game:
                 w=700,
                 h=self.answer_height,
                 text=answer,
-                onclick_func=lambda: self.answer_question(
-                    self.current_question['question'],
-                    3 - index
-                ),
+                onclick_func=self.build_answer_question_func(self.current_question['question'], index),
                 is_it_correct=is_it_correct
             )
+
+    def build_answer_question_func(self, question, answer):
+        return lambda: self.answer_question(question, answer)
 
     def join_game(self):
         input_objects = self.get_input_objects()
@@ -256,7 +258,7 @@ class Game:
         self.cleanScreen()
 
         game_id = get_game_id()
-        self.addTextBlock(50, 70, 720, 50, f"Welcome to Shir's Kahoot game! - {game_id}")
+        self.addTextBlock(70, 70, 720, 50, f"Welcome to Shir's Kahoot game! - {game_id}")
 
         participants_ws = websocket_get_game_participants(game_id=game_id, on_message_func=self.show_game_participants_from_websocket)
         self.websockets.append(participants_ws)
@@ -271,12 +273,12 @@ class Game:
     def add_question_to_editor(self):
         questions_amount = len(self.questions_editor_inputs) + 1
         question_height_const = questions_amount * 200
-        question_text = self.addTextInput(150, question_height_const, 350, 20, "TYPE QUESTION HERE")
-        first_answer = self.addTextInput(150, question_height_const + 30, 350, 20, "TYPE FIRST ANSWER")
-        second_answer = self.addTextInput(150, question_height_const + 60, 350, 20, "TYPE SECOND ANSWER")
-        third_answer = self.addTextInput(150, question_height_const + 90, 350, 20, "TYPE THIRD ANSWER")
-        fourth_answer = self.addTextInput(150, question_height_const + 120, 350, 20, "TYPE FOURTH ANSWER")
-        correct_answer = self.addTextInput(150, question_height_const + 150, 350, 20, "CORRECT ANSWER NUM")
+        question_text = self.addTextInput(150, question_height_const, 350, 20, "TYPE QUESTION HERE", 40)
+        first_answer = self.addTextInput(150, question_height_const + 30, 350, 20, "TYPE FIRST ANSWER", 40)
+        second_answer = self.addTextInput(150, question_height_const + 60, 350, 20, "TYPE SECOND ANSWER", 40)
+        third_answer = self.addTextInput(150, question_height_const + 90, 350, 20, "TYPE THIRD ANSWER", 40)
+        fourth_answer = self.addTextInput(150, question_height_const + 120, 350, 20, "TYPE FOURTH ANSWER", 40)
+        correct_answer = self.addTextInput(150, question_height_const + 150, 350, 20, "CORRECT ANSWER NUM", 40)
 
         # Adding specific question instances to questions_editor_inputs list
         self.questions_editor_inputs.append(

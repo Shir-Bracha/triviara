@@ -69,14 +69,13 @@ def promote_game_to_next_stage(game_id: str) -> Optional[KhaootGame]:
     game_stages_amount = len(current_game.questions)
     next_stage = current_game.current_stage + 1
 
-
     if next_stage > game_stages_amount:
         finish_game(game_id=game_id)
+
         return
 
     # Promoting the game to the next stage
     current_game.current_stage = next_stage
-
 
     # Clearing all of the participants answered flag
     for participant in current_game.participants:

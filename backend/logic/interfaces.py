@@ -6,6 +6,7 @@ class User(BaseModel):
     username: str
     score: int = 0
     answered: bool = False
+    promoted_stage: bool = False
 
 
 class Question(BaseModel):
