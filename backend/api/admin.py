@@ -17,6 +17,8 @@ async def create_new_game(questions: List[Question], token: str) -> str:
     :return: This method returns a link to the newly created server.
     """
     token_data = get_data_from_jwt(token=token)
+    print("token_data - " + token_data.username)
+    print(questions)
 
     new_game = create_new_game_with_questions(
         questions=questions,
