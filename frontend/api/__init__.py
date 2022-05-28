@@ -1,2 +1,2 @@
-base_url="http://localhost:8000/"
-websocket_url="ws://localhost:8000/"
+base_url="http://triviara.herokuapp.com/"
+websocket_url="ws://triviara.herokuapp.com/"
