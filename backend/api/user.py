@@ -1,7 +1,6 @@
 from logic.auth import get_data_from_jwt
 from logic.auth import update_access_token
 from logic.game import get_game_by_id
-from logic.game import get_game_user_by_username
 from logic.user import answer_specific_question
 from logic.user import create_new_admin_user_by_username
 from logic.user import create_new_user_by_username

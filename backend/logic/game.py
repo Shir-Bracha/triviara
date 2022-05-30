@@ -1,10 +1,14 @@
+import json
 from typing import List
 from typing import Optional
+
+from logic.data import ALL_GAMES_MAP
+from logic.data import CURRENT_USERS_MAP
+from logic.data import LEADER_BOARDS_MAP
+from logic.data import REDIS_CONNECTION
 from logic.interfaces import Question
 from logic.interfaces import User
 from logic.interfaces import KhaootGame
-from logic.data import LEADER_BOARDS
-from logic.data import ALL_GAMES
 
 
 def get_game_by_id(game_id: str) -> KhaootGame:
@@ -12,7 +16,7 @@ def get_game_by_id(game_id: str) -> KhaootGame:
     :param game_id:
     :return:
     """
-    return ALL_GAMES.get(game_id)
+    return KhaootGame(**json.loads(REDIS_CONNECTION.hget(ALL_GAMES_MAP, game_id)))
 
 
 def get_game_user_by_username(game_id: str, username: str) -> Optional[User]:
@@ -81,6 +85,8 @@ def promote_game_to_next_stage(game_id: str) -> Optional[KhaootGame]:
     for participant in current_game.participants:
         participant.answered = False
 
+    REDIS_CONNECTION.hset(ALL_GAMES_MAP, game_id, current_game.json())
+
     return current_game
 
 
@@ -89,10 +95,20 @@ def finish_game(game_id: str) -> None:
     :param game_id:
     :return:
     """
-    finished_game = ALL_GAMES.get(game_id, None)
-    finished_game.game_ended = True
+    finished_game_raw = REDIS_CONNECTION.hget(ALL_GAMES_MAP, game_id)
+    if finished_game_raw is None:
+        return
 
-    LEADER_BOARDS[game_id] = finished_game.participants
+    finished_game = KhaootGame(**json.loads(finished_game_raw))
+    finished_game.game_ended = True
+    REDIS_CONNECTION.hset(ALL_GAMES_MAP, game_id, finished_game.json())
+
+    serialized_participants = []
+    for participant in finished_game.participants:
+        serialized_participants.append(participant.json())
+        REDIS_CONNECTION.hdel(CURRENT_USERS_MAP, participant.username)
+
+    REDIS_CONNECTION.hset(LEADER_BOARDS_MAP, game_id, json.dumps(serialized_participants))
 
 
 def get_game_leaderboard_by_game_id(game_id: str) -> Optional[List[User]]:
@@ -100,12 +116,16 @@ def get_game_leaderboard_by_game_id(game_id: str) -> Optional[List[User]]:
     :param game_id:
     :return:
     """
-    game_leaderboard = LEADER_BOARDS.get(game_id)
+    game_leaderboard = json.loads(REDIS_CONNECTION.hget(LEADER_BOARDS_MAP, game_id))
+
+    game_leaderboard_list = []
+    for user in game_leaderboard:
+        game_leaderboard_list.append(User(**json.loads(user)))
 
     if game_leaderboard is None:
         raise ValueError(f"Failed to get game leaderboard, couldn't find game_id {game_id}.")
 
-    return game_leaderboard
+    return game_leaderboard_list
 
 
 def get_specific_game_current_stage_questions(game_id: str) -> Optional[Question]:

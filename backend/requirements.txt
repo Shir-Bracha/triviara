@@ -1,6 +1,24 @@
-fastApi == 0.75.2
-uvicorn == 0.17.6
-jose == 1.0.0
-python-jose == 3.3.0
-pydantic == 1.9.0
-websockets == 10.3
+anyio==3.6.1
+asgiref==3.5.2
+async-timeout==4.0.2
+click==8.1.3
+Deprecated==1.2.13
+ecdsa==0.17.0
+fastapi==0.75.2
+h11==0.13.0
+idna==3.3
+jose==1.0.0
+packaging==21.3
+pyasn1==0.4.8
+pydantic==1.9.0
+pyparsing==3.0.9
+python-jose==3.3.0
+redis==4.3.1
+rsa==4.8
+six==1.16.0
+sniffio==1.2.0
+starlette==0.17.1
+typing_extensions==4.2.0
+uvicorn==0.17.6
+websockets==10.3
+wrapt==1.14.1

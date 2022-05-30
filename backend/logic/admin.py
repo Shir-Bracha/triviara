@@ -1,8 +1,11 @@
+import json
 from typing import List
 import uuid
+
+from logic.data import ALL_GAMES_MAP
+from logic.data import REDIS_CONNECTION
 from logic.interfaces import KhaootGame
 from logic.interfaces import Question
-from logic.data import ALL_GAMES
 from logic.game import get_game_by_id
 from logic.user import get_current_user_by_username
 
@@ -21,7 +24,7 @@ def create_new_game_with_questions(questions: List[Question], username: str) -> 
         questions=questions,
     )
 
-    ALL_GAMES[new_game_id] = new_game
+    REDIS_CONNECTION.hset(ALL_GAMES_MAP, new_game_id, new_game.json())
 
     return new_game
 
@@ -37,3 +40,5 @@ def start_specific_game(game_id: str) -> None:
         raise Exception("Game already started")
 
     current_game.current_stage = 1
+    REDIS_CONNECTION.hset(ALL_GAMES_MAP, game_id, current_game.json())
+

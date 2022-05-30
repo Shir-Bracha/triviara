@@ -82,6 +82,8 @@ async def all_participants_answered(websocket: WebSocket, game_id: str) -> None:
         if did_all_participants_answered:
             promote_game_to_next_stage(game_id=game_id)
 
+            current_game = get_game_by_id(game_id=game_id)
+
             set_all_users_need_to_be_promoted_flag(
                 current_game=current_game,
                 promoted=True

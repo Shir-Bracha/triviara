@@ -1,9 +1,13 @@
+import json
 from typing import Optional
+
+from logic.data import ALL_GAMES_MAP
+from logic.data import CURRENT_USERS_MAP
+from logic.data import REDIS_CONNECTION
 from logic.interfaces import KhaootGame
 from logic.interfaces import User
 from logic.auth import TokenData
 from logic.auth import create_access_token
-from logic.data import CURRENT_USERS
 from logic.game import get_game_by_id
 from logic.game import get_game_question
 from logic.game import get_game_user_by_username
@@ -14,10 +18,13 @@ SCORE_UNIT = 10
 
 
 def create_new_admin_user_by_username(username: str) -> Optional[str]:
-    if username in CURRENT_USERS:
+    is_user_exists = REDIS_CONNECTION.hget(CURRENT_USERS_MAP, username)
+
+    if is_user_exists:
         raise ValueError(f"Username {username} is already taken.")
 
-    CURRENT_USERS[username] = User(username=username)
+    new_user = User(username=username)
+    REDIS_CONNECTION.hset(CURRENT_USERS_MAP, username, new_user.json())
 
     token_data = TokenData(
         is_admin=True,
@@ -32,10 +39,13 @@ def create_new_admin_user_by_username(username: str) -> Optional[str]:
 
 
 def create_new_user_by_username(username: str) -> Optional[str]:
-    if username in CURRENT_USERS:
+    is_user_exists = REDIS_CONNECTION.hget(CURRENT_USERS_MAP, username)
+
+    if is_user_exists:
         raise ValueError(f"Username {username} is already taken.")
 
-    CURRENT_USERS[username] = User(username=username)
+    new_user = User(username=username)
+    REDIS_CONNECTION.hset(CURRENT_USERS_MAP, username, new_user.json())
 
     token_data = TokenData(
         is_admin=False,
@@ -53,7 +63,7 @@ def get_current_user_by_username(username: str) -> User:
     """
     :return: the current user model by the JWT.
     """
-    current_user = CURRENT_USERS.get(username)
+    current_user = User(**json.loads(REDIS_CONNECTION.hget(CURRENT_USERS_MAP, username)))
     return current_user
 
 
@@ -69,6 +79,8 @@ def join_specific_game(username: str, game_id: str) -> Optional[KhaootGame]:
         raise Exception(f"Too many players in game {game_id}.")
 
     current_game.participants.append(current_user)
+
+    REDIS_CONNECTION.hset(ALL_GAMES_MAP, game_id, current_game.json())
 
     return current_game
 
@@ -105,7 +117,7 @@ def update_user_score(user: User) -> None:
     user.score += SCORE_UNIT
 
 
-def check_answer(game_id: str, username: str, question: str, answer: int) -> User:
+def check_answer(game_id: str, username: str, question: str, answer: int) -> None:
     """
     :param game_id:
     :param username:
@@ -120,15 +132,15 @@ def check_answer(game_id: str, username: str, question: str, answer: int) -> Use
         answer=answer,
     )
 
-    current_user = get_game_user_by_username(game_id=game_id, username=username)
-    if is_answer_correct:
-        update_user_score(user=current_user)
+    for game_user in current_game.participants:
+        if game_user.username == username:
+            if is_answer_correct:
+                update_user_score(user=game_user)
 
-    current_user.answered = True
+            game_user.answered = True
 
-    # TODO: check if theres a need to update the game data itself (main dictionaries)
-
-    return current_user
+            REDIS_CONNECTION.hset(ALL_GAMES_MAP, game_id, current_game.json())
+            break
 
 
 def answer_specific_question(game_id: str, username: str, question: str, answer: int) -> None:
@@ -159,6 +171,9 @@ def set_specific_user_promoted_stage_flag(current_game: KhaootGame, username: st
     for user in current_game.participants:
         if user.username == username:
             user.promoted_stage = promoted
+
+            REDIS_CONNECTION.hset(ALL_GAMES_MAP, current_game.game_id, current_game.json())
+            break
 
 
 def set_all_users_need_to_be_promoted_flag(current_game: KhaootGame, promoted: bool) -> None:
